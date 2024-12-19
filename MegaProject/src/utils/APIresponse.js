@@ -1,8 +1,10 @@
 class APIresponse{
     constructor(statusCode,message="Success",data){
+        this.statusCode = statusCode;
         this.data = data;
         super(message);
-        this.statusCode = statusCode;
         this.success = statusCode < 400;
     }
 }
+
+export {APIresponse}
