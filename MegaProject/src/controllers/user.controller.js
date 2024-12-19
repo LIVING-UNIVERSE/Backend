@@ -1,7 +1,6 @@
 import asyncHandler from "../utils/asyncHandler.js"
 import { User } from "../models/user.models.js"
 import { APIError } from "../utils/APIError.js"
-import { User } from "../models/user.models.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { APIresponse } from "../utils/APIresponse.js"
 
@@ -26,22 +25,36 @@ const registerUser = asyncHandler(async(req,res)=>{
         throw  new APIError(400,"All fields are necessary")
     }
 
-    if(User.findOne({
+    const findUser = await User.findOne({
         $or:[{username},{email}]
-    })){
+    })
+
+    if(findUser){
         throw new APIError(409,"User with email or usename already exists")
     }
 
-    const avatarLocalPath =req.files?.avatar[0]?.path;
-    const coverImageLocalPath = req.files?.coverImage[0]?.path;
+    let avatarLocalPath;
+    if(req.files.avatar && Array.isArray(req.files.avatar) && req.files.avatar.length >0){
+        avatarLocalPath = req.files?.avatar[0]?.path;
+    }
+    else{
+        throw new APIError("401", "Avatar file is required.")
+    }
+
+  
+
+    let coverImageLocalPath;
+    if(req.files.coverImage && Array.isArray(req.files.coverImage) && req.files.coverImage.length >0){
+        coverImageLocalPath= req.files?.coverImage[0]?.path;
+    }
+
 
     if(!avatarLocalPath){
-        throw new APIError(400,"Avatar file is required.")
+        throw new APIError(403,"Avatar file is required.")
     }
-    
-    
+ 
     const avatar = await uploadOnCloudinary(avatarLocalPath);
-    const coverImage = await uploadOnCloudinary(coverImageLocalPath);
+    const coverImage = await uploadOnCloudinary(coverImageLocalPath)
     
     if(!avatar){
         throw new APIError(400,"Avatar file is required.")
@@ -56,18 +69,16 @@ const registerUser = asyncHandler(async(req,res)=>{
         avatar :avatar.url,
     })
 
-    const createdUser = User.findById(user._id);
+    const createdUser = await User.findById(user._id).select("-password -refreshToken")
     if(!createdUser){
-        throw new APIError(500,"something went wrong while registering the user.");
-    }
-    else{
-        createdUser.select("-password -refreshToken");
+        throw new APIError(500,"Something went wrong while registering the user.")
     }
 
-
+    
     return res.status(201).json(
         new APIresponse('200',createdUser,"User register successfully.")
     )
 })
 
 export {registerUser}
+
