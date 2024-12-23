@@ -158,8 +158,8 @@ const logoutUser = asyncHandler(async(req,res)=>{
 
     await User.findByIdAndUpdate(userID, 
         {
-            $set:{
-                refreshToken:undefined
+            $unset:{
+                refreshToken:1
             }
         },
         {
@@ -235,7 +235,7 @@ const changeCurrentPassword = asyncHandler( async(req,res)=>{
 
     return res
     .status(201)
-    .json( new APIresponse(200,{},"Password Change Successfully."))
+    .json( new APIresponse(200,{newPassword},"Password Change Successfully."))
 })
 
 const getCurrentUser = asyncHandler(async(req,res)=>{
@@ -255,14 +255,14 @@ const updateAccountDetails = asyncHandler(async(req,res)=>{
     const user = await User.findByIdAndUpdate(req.user?._id, 
         {
             $set:{
-                fullName,
+                fullName:fullName,
                 email:email
             }
         },
         {
             new:true
         }
-    ).select("-password refreshToken")
+    ).select("-password -refreshToken")
 
     return res
     .status(200)
@@ -370,9 +370,9 @@ const getUserChannelProfile = asyncHandler(async(req,res)=>{
                 },
                 isSubscribed:{
                     $cond:{
-                        $if:{$in:[req.user?._id,"$subscribers.subscriber"]},
-                        $then:true,
-                        $false:false
+                        if:{$in:[req.user?._id,"$subscribers.subscriber"]},
+                        then:true,
+                        else:false
                     }
                 }
             }
@@ -390,7 +390,7 @@ const getUserChannelProfile = asyncHandler(async(req,res)=>{
             }
         }
     ])
-    console.log(channel);
+    console.log("channel:",channel);
 
     if(!channel?.length){
         throw new APIError(404,"Channel does not exist");
@@ -446,7 +446,7 @@ const getWatchHistory =asyncHandler(async(req,res)=>{
         }
 
     ])
-    console.log(user)
+    console.log("userWatchHistory:",user)
 
     return res
     .status(200)
