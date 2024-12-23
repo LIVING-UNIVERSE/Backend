@@ -4,7 +4,6 @@ import { APIError } from "../utils/APIError.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { APIresponse } from "../utils/APIresponse.js"
 import jwt from 'jsonwebtoken';
-import { runInNewContext } from "vm"
 import mongoose from "mongoose"
 
 const generateRefreshAndAccessTokens = async (userId)=>{
